@@ -64,7 +64,7 @@ int delete_directory(const char *dir_path) {
     }
 
     struct dirent *entry;
-    char path[MAX_PATH];
+    char path[MAX_PATH_LEN];
     struct stat statbuf;
 
     // 读取目录内容
@@ -111,8 +111,8 @@ int delete_directory(const char *dir_path) {
 char *get_prompt(void) {
 
     char name[] = "$USER@$NAME";
-    char new_name[MAX_PATH/2];
-    replace_env_variables(name, new_name, MAX_PATH/2);
+    char new_name[MAX_PATH_LEN/2];
+    replace_env_variables(name, new_name, MAX_PATH_LEN/2);
 
     // 获取当前工作目录
     char *pwd = get_pwd();
@@ -121,7 +121,7 @@ char *get_prompt(void) {
     }
 
     // 拼接用户名、主机名和路径，生成类似shell的提示符字符串
-    char prompt[MAX_PATH];  
+    char prompt[MAX_PATH_LEN];  
 
     // 用于显示彩色的prompt
     snprintf(prompt, sizeof(prompt), "\001\033[49;32m\002\001\033[1m\002%s\001\033[0m\002:\001\033[49;34m\002\001\033[1m\002%s\001\033[0m\002$ ", new_name, pwd);
@@ -135,7 +135,7 @@ char *get_prompt(void) {
 
 /* 获取当前工作目录 */
 char* get_pwd(void) {
-    char buf[MAX_PATH];
+    char buf[MAX_PATH_LEN];
     // 使用 syscall 调用 SYS_getcwd
     if (-1 != syscall(SYS_getcwd, buf, sizeof(buf))) {
         return strdup(buf); 
@@ -170,7 +170,7 @@ char* get_external_command_path(const char *command) {
         *colon = '\0';  // 临时将 ':' 替换为 '\0'，方便构造目录
 
         // 构造完整路径
-        char full_path[MAX_PATH];
+        char full_path[MAX_PATH_LEN];
         snprintf(full_path, sizeof(full_path), "%s/%s", dir, command);
 
         // 检查文件是否存在且可执行
@@ -184,7 +184,7 @@ char* get_external_command_path(const char *command) {
 
     // 最后一个路径段的检查（没有 `:`）
     if (*dir != '\0') {
-        char full_path[MAX_PATH];
+        char full_path[MAX_PATH_LEN];
         snprintf(full_path, sizeof(full_path), "%s/%s", dir, command);
 
         if (access(full_path, X_OK) == 0) {
@@ -197,6 +197,31 @@ char* get_external_command_path(const char *command) {
     return NULL;  // 未找到命令
 }
 
+
+void print_file(const char *file_path, int show_line_numbers) {
+
+    
+    FILE *file = fopen(file_path, "r");
+    if (file == NULL) {
+        perror("cat: cannot open file");
+        return ;
+    }
+
+    char buffer[MAX_STR_LEN];
+
+    int line_number = 1;
+
+    while (fgets(buffer, sizeof(buffer), file) != NULL) {
+        if (show_line_numbers) {
+            // 如果启用了行号显示，则打印行号
+            printf("%6d  %s", line_number++, buffer);
+        } else {
+            printf("%s", buffer);
+        }
+    }
+    printf("\n");
+    fclose(file);  
+}
 
 // /* 获取当前用户名和主机名 */
 // char *get_prompt(void) {
@@ -219,7 +244,7 @@ char* get_external_command_path(const char *command) {
 //     }
 
 //     // 拼接用户名、主机名和路径，生成类似shell的提示符字符串
-//     char prompt[MAX_PATH];  
+//     char prompt[MAX_PATH_LEN];  
 
 //     // 用于显示彩色的prompt
 //     snprintf(prompt, sizeof(prompt), "\001\033[49;32m\002\001\033[1m\002%s@%s\001\033[0m\002:\001\033[49;34m\002\001\033[1m\002%s\001\033[0m\002$ ", username, hostname, cwd);

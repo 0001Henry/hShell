@@ -32,8 +32,8 @@ void shell_loop(){
         
         add_history(cmds);
 
-        char new_cmds[MAX_PATH];
-        replace_env_variables(cmds, new_cmds, MAX_PATH);
+        char new_cmds[MAX_PATH_LEN];
+        replace_env_variables(cmds, new_cmds, MAX_PATH_LEN);
 
         state = exe_cmds(new_cmds);
 

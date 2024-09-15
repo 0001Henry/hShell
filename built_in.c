@@ -19,7 +19,10 @@ char *built_in_cmds[] = {
     "exit",
     "echo",
     "type",
-    "env"
+    "env",
+    "export",
+    "unset",
+    "cat",
 };
 
 int (*built_in_list[])(char**) = {
@@ -30,11 +33,51 @@ int (*built_in_list[])(char**) = {
     &my_exit,
     &my_echo,
     &my_type,
-    &my_env
-
+    &my_env,
+    &my_export,
+    &my_unset,
+    &my_cat
 };
 
 extern int token_num;
+
+
+
+int my_export(char **token_list) {
+    if (token_num != 2) {
+        printf("Usage: export VAR=value\n");
+        return 1;
+    }
+
+    // 提取环境变量的名称和值
+    char *var = strtok(token_list[1], "=");
+    char *value = strtok(NULL, "=");
+
+    if (var == NULL || value == NULL) {
+        printf("Invalid format. Usage: export VAR=value\n");
+    }else{
+        // 设置环境变量
+        if (setenv(var, value, 1) != 0) {
+            perror("Failed to set environment variable");
+        }
+    }
+    return 1;
+}
+
+int my_unset(char **token_list) {
+    if (token_num != 2) {
+        printf("Usage: unset VAR\n");
+        return 1;
+    }
+
+    char *var = token_list[1];
+
+    if (unsetenv(var) != 0) {
+        perror("Failed to unset environment variable");
+    }
+
+    return 1;
+}
 
 
 int my_touch(char** token_list){
@@ -143,7 +186,8 @@ int my_exit(char** token_list){
 
 int my_echo(char** token_list){
     if (NULL == token_list[1]){
-        printf("Please enter the correct output\n");
+        // printf("Please enter the correct output\n");
+        printf("\n");
     }
     else{
         for (int i = 1; NULL != token_list[i]; i++)
@@ -191,4 +235,26 @@ int my_env(char** token_list){
             printf("%s\n", environ[i]);
     }
     return 1;
+}
+
+
+int my_cat(char **token_list){
+    if (NULL == token_list[1]){
+        printf("Please enter the correct file path!\n");
+        return 1;
+    }    
+    
+    int show_line_numbers = 0;  
+    int start_index = 1;       
+
+    // 检查是否提供了选项
+    if (strcmp(token_list[1], "-n") == 0) {
+        show_line_numbers = 1;  
+        start_index = 2;       
+    }
+
+    // 逐个处理命令行参数中的文件
+    for (int i = start_index; i < token_num; i++) {
+        print_file(token_list[i], show_line_numbers);
+    }
 }
