@@ -1,7 +1,7 @@
 #ifndef _built_IN_H
 #define _built_IN_H
 
-#define MAX_PATH 1024
+
 #define built_IN_CMD_COUNT 8
 
 

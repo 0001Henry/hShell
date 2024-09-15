@@ -8,6 +8,41 @@
 #include <sys/stat.h>
 #include <dirent.h>
 
+// 查找并替换环境变量
+void replace_env_variables(char *input, char *output, int max_size) {
+    int i = 0, j = 0;
+    
+    while (input[i] != '\0' && j < max_size - 1) {
+        if (input[i] == '$') {
+            // 检测到 '$'，开始提取环境变量名
+            i++;
+            char env_name[256] = {0}; 
+            int env_index = 0;
+            
+            // while (input[i] != ' ' && input[i] != '\0' && input[i] != '\n' && env_index < 255) {
+            while ((input[i] == '_' || (input[i] >= 'A' && input[i] <= 'Z')) && env_index < 255) {
+                env_name[env_index++] = input[i++];
+            }
+            env_name[env_index] = '\0';
+
+            // 获取环境变量的值
+            char *env_value = getenv(env_name);
+            if (NULL != env_value) {
+                // 将环境变量值复制到输出
+                int k = 0;
+                while (env_value[k] != '\0' && j < max_size - 1) {
+                    output[j++] = env_value[k++];
+                }
+            }
+        } else {
+            // 直接将普通字符复制到输出
+            output[j++] = input[i++];
+        }
+    }
+    output[j] = '\0';  // 确保输出以 null 结尾
+}
+
+
 // 删除文件函数，使用 SYS_unlink 系统调用
 int delete_file(const char *path) {
     if (syscall(SYS_unlink, path) == 0) {
@@ -107,6 +142,7 @@ char *get_prompt(void) {
 /* 获取当前工作目录 */
 char* get_pwd(void) {
     char buf[MAX_PATH];
+    // 使用 syscall 调用 SYS_getcwd
     if (-1 != syscall(SYS_getcwd, buf, sizeof(buf))) {
         return strdup(buf); 
     } 
@@ -140,13 +176,13 @@ char* get_external_command_path(const char *command) {
         *colon = '\0';  // 临时将 ':' 替换为 '\0'，方便构造目录
 
         // 构造完整路径
-        char fullpath[MAX_PATH];
-        snprintf(fullpath, sizeof(fullpath), "%s/%s", dir, command);
+        char full_path[MAX_PATH];
+        snprintf(full_path, sizeof(full_path), "%s/%s", dir, command);
 
         // 检查文件是否存在且可执行
-        if (access(fullpath, X_OK) == 0) {
+        if (access(full_path, X_OK) == 0) {
             free(path_copy);  
-            return strdup(fullpath);  
+            return strdup(full_path);  
         }
 
         dir = colon + 1;  // 继续查找下一个目录
@@ -154,12 +190,12 @@ char* get_external_command_path(const char *command) {
 
     // 最后一个路径段的检查（没有 `:`）
     if (*dir != '\0') {
-        char fullpath[MAX_PATH];
-        snprintf(fullpath, sizeof(fullpath), "%s/%s", dir, command);
+        char full_path[MAX_PATH];
+        snprintf(full_path, sizeof(full_path), "%s/%s", dir, command);
 
-        if (access(fullpath, X_OK) == 0) {
+        if (access(full_path, X_OK) == 0) {
             free(path_copy);
-            return strdup(fullpath);
+            return strdup(full_path);
         }
     }
 

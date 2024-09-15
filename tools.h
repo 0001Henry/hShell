@@ -3,6 +3,8 @@
 
 #define MAX_PATH 1024
 
+void replace_env_variables(char *input, char *output, int max_size);
+
 char *get_pwd(void);
 
 char *get_prompt(void);

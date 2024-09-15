@@ -5,7 +5,7 @@ objects = main.o utils.o pipline.o built_in.o external.o tools.o
 CC = gcc
 
 # Define the target executable name
-TARGET = hyr_shell
+TARGET = hyrShell
 
 # Default rule to build the program
 all: $(TARGET)

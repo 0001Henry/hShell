@@ -7,6 +7,7 @@
 #include "external.h"
 #include "tools.h"
 
+
 int token_num = 0;
 
 extern char *built_in_cmds[];
@@ -28,9 +29,13 @@ void shell_loop(){
             perror("Allocate failed"); 
             exit(EXIT_FAILURE); 
         }
+        
         add_history(cmds);
 
-        state = exe_cmds(cmds);
+        char new_cmds[MAX_PATH];
+        replace_env_variables(cmds, new_cmds, MAX_PATH);
+
+        state = exe_cmds(new_cmds);
 
         free(cmds);
 
