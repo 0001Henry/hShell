@@ -1,7 +1,7 @@
 #ifndef _TOOLS_H
 #define _TOOLS_H
 
-#define MAX_PATH 1024
+#define MAX_PATH 512
 
 void replace_env_variables(char *input, char *output, int max_size);
 

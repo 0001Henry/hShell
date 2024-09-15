@@ -1,5 +1,5 @@
 # Define the objects needed to compile the program
-objects = main.o utils.o pipline.o built_in.o external.o tools.o
+objects = main.o pipline.o built_in.o external.o tools.o
 
 # Define the compiler to use
 CC = gcc
@@ -17,9 +17,6 @@ $(TARGET): $(objects)
 # Rules for compiling individual object files
 main.o: main.c
 	$(CC) -c main.c
-
-utils.o: utils.c utils.h
-	$(CC) -c utils.c
 
 pipline.o: pipline.c pipline.h
 	$(CC) -c pipline.c

@@ -103,8 +103,16 @@ int my_rm(char** token_list){
 
 
 int my_cd(char** token_list){
-    if (NULL == token_list[1]) {
-        printf("Please enter the correct directory\n");
+    if (NULL == token_list[1] || strcmp(token_list[1],"~") == 0) {
+        // printf("Please enter the correct directory\n");
+        char *home_path = getenv("HOME");
+        if (home_path == NULL) {
+            printf("Failed to find HOME\n");
+            return 1;  
+        }
+        if (syscall(SYS_chdir, home_path) != 0) {
+            perror("Failed to change the directory");
+        }     
     } else if (token_num != 2) {
         printf("Too many parameters!\n");
     } else {
