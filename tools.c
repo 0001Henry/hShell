@@ -107,36 +107,30 @@ int delete_directory(const char *dir_path) {
 }
 
 
-/* 获取当前用户名和主机名 */
+// 获取系统命令提示符
 char *get_prompt(void) {
 
-    // 获取用户名
-    uid_t uid = getuid();
-    struct passwd *pw = getpwuid(uid);
-    char *username = pw ? pw->pw_name : "unknown";
-
-    // 获取主机名
-    char hostname[256];
-    if (gethostname(hostname, sizeof(hostname)) != 0) {
-        strcpy(hostname, "unknown-host");
-    }
+    char name[] = "$USER@$NAME";
+    char new_name[MAX_PATH/2];
+    replace_env_variables(name, new_name, MAX_PATH/2);
 
     // 获取当前工作目录
-    char *cwd = get_pwd();
-    if (!cwd) {
-        cwd = strdup("unknown-dir");
+    char *pwd = get_pwd();
+    if (!pwd) {
+        pwd = strdup("unknown-dir");
     }
 
     // 拼接用户名、主机名和路径，生成类似shell的提示符字符串
     char prompt[MAX_PATH];  
 
     // 用于显示彩色的prompt
-    snprintf(prompt, sizeof(prompt), "\001\033[49;32m\002\001\033[1m\002%s@%s\001\033[0m\002:\001\033[49;34m\002\001\033[1m\002%s\001\033[0m\002$ ", username, hostname, cwd);
+    snprintf(prompt, sizeof(prompt), "\001\033[49;32m\002\001\033[1m\002%s\001\033[0m\002:\001\033[49;34m\002\001\033[1m\002%s\001\033[0m\002$ ", new_name, pwd);
 
-    free(cwd);
+    free(pwd);
 
     return strdup(prompt);
 }
+
 
 
 /* 获取当前工作目录 */
@@ -202,3 +196,35 @@ char* get_external_command_path(const char *command) {
     free(path_copy);
     return NULL;  // 未找到命令
 }
+
+
+// /* 获取当前用户名和主机名 */
+// char *get_prompt(void) {
+
+//     // 获取用户名
+//     uid_t uid = getuid();
+//     struct passwd *pw = getpwuid(uid);
+//     char *username = pw ? pw->pw_name : "unknown";
+
+//     // 获取主机名
+//     char hostname[256];
+//     if (gethostname(hostname, sizeof(hostname)) != 0) {
+//         strcpy(hostname, "unknown-host");
+//     }
+
+//     // 获取当前工作目录
+//     char *cwd = get_pwd();
+//     if (!cwd) {
+//         cwd = strdup("unknown-dir");
+//     }
+
+//     // 拼接用户名、主机名和路径，生成类似shell的提示符字符串
+//     char prompt[MAX_PATH];  
+
+//     // 用于显示彩色的prompt
+//     snprintf(prompt, sizeof(prompt), "\001\033[49;32m\002\001\033[1m\002%s@%s\001\033[0m\002:\001\033[49;34m\002\001\033[1m\002%s\001\033[0m\002$ ", username, hostname, cwd);
+
+//     free(cwd);
+
+//     return strdup(prompt);
+// }
