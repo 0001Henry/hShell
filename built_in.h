@@ -2,7 +2,7 @@
 #define _built_IN_H
 
 
-#define built_IN_CMD_COUNT 11
+#define built_IN_CMD_COUNT 12
 
 
 // extern char *built_in_cmds[];
@@ -30,5 +30,7 @@ int my_export(char **token_list);
 int my_unset(char **token_list);
 
 int my_cat(char **token_list);
+
+int my_cp(char **token_list);
 
 #endif

@@ -23,6 +23,7 @@ char *built_in_cmds[] = {
     "export",
     "unset",
     "cat",
+    "cp"
 };
 
 int (*built_in_list[])(char**) = {
@@ -36,11 +37,51 @@ int (*built_in_list[])(char**) = {
     &my_env,
     &my_export,
     &my_unset,
-    &my_cat
+    &my_cat,
+    &my_cp
 };
 
 extern int token_num;
 
+
+int my_cp(char **token_list) {
+    // my_debug(0);
+    if (token_num < 3) {
+        printf("Usage: cp [-i] [-p] source target\n");
+        return 1;
+    }
+
+    int interactive = 0;
+    int preserve_attrs = 0;
+    int start_index = 1;
+
+    // 处理选项
+    if (strcmp(token_list[1], "-i") == 0) {
+        interactive = 1;
+        start_index++;
+    }
+    if (strcmp(token_list[1], "-p") == 0 || (interactive && strcmp(token_list[2], "-p") == 0)) {
+        preserve_attrs = 1;
+        start_index++;
+    }
+
+    const char *src_path = token_list[start_index];
+    const char *dest_path = token_list[start_index + 1];
+
+    struct stat st;
+    if (stat(src_path, &st) == 0) {
+        if (S_ISDIR(st.st_mode)) {
+            // 复制目录
+            return copy_directory(src_path, dest_path, interactive, preserve_attrs);
+        } else {
+            // 复制文件
+            return copy_file(src_path, dest_path, interactive, preserve_attrs);
+        }
+    } else {
+        perror("Failed to get file status");
+        return 1;
+    }
+}
 
 
 int my_export(char **token_list) {
@@ -81,8 +122,8 @@ int my_unset(char **token_list) {
 
 
 int my_touch(char** token_list){
-    if(NULL == token_list[1]){
-        printf("Please enter the correct path!\n");
+    if (token_num < 2) {
+        printf("Usage: touch [file1] [file2]...\n");
         return 1;
     }
 
@@ -117,11 +158,8 @@ int my_touch(char** token_list){
 }
 
 int my_rm(char** token_list){
-    if(NULL == token_list[1]){
-        printf("Please enter the correct path!\n");
-        return 1;
-    }else if(token_num != 2){
-        printf("Too many parameters!\n");
+    if (token_num < 2) {
+        printf("Usage: rm [file/directory]...\n");
         return 1;
     }
 
@@ -153,7 +191,7 @@ int my_cd(char** token_list){
             printf("Failed to find HOME\n");
             return 1;  
         }
-        if (syscall(SYS_chdir, home_path) != 0) {
+        else if (syscall(SYS_chdir, home_path) != 0) {
             perror("Failed to change the directory");
         }     
     } else if (token_num != 2) {
@@ -200,12 +238,8 @@ int my_echo(char** token_list){
 }
 
 int my_type(char** token_list){
-    if (NULL == token_list[1]){
-        printf("Please enter the correct command name!\n");
-        return 1;
-    }
-    else if(token_num != 2){
-        printf("Too many parameters!\n");
+    if(token_num != 2){
+        printf("Usage: type cmd_name\n");
         return 1;
     }
     
@@ -239,10 +273,10 @@ int my_env(char** token_list){
 
 
 int my_cat(char **token_list){
-    if (NULL == token_list[1]){
-        printf("Please enter the correct file path!\n");
+    if(token_num != 2){
+        printf("Usage: cat [-n] file\n");
         return 1;
-    }    
+    }
     
     int show_line_numbers = 0;  
     int start_index = 1;       

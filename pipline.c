@@ -94,6 +94,7 @@ int exe_cmds(char *cmds){
 
     int flag = 0;
     for (int i = 0; i < built_IN_CMD_COUNT; i++){
+        // printf("%s\n", built_in_cmds[i]);
         if (strcmp(token_list[0], built_in_cmds[i]) == 0){
             state = (*built_in_list[i])(token_list);
             flag = 1; 

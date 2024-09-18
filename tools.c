@@ -7,6 +7,8 @@
 #include <sys/syscall.h>
 #include <sys/stat.h>
 #include <dirent.h>
+#include <errno.h>
+#include <fcntl.h>
 
 // 查找并替换环境变量
 void replace_env_variables(char *input, char *output, int max_size) {
@@ -104,6 +106,116 @@ int delete_directory(const char *dir_path) {
         perror("Failed to delete directory");
         return 0;
     }
+}
+
+// 递归复制目录
+int copy_directory(const char *src_path, const char *dest_path, int interactive, int preserve_attrs) {
+    DIR *dir = opendir(src_path);
+    if (dir == NULL) {
+        perror("Failed to open directory");
+        return 1;
+    }
+
+    // 创建目标目录 7:rwx  5:r-x  EEXIST:File Exists
+    if (mkdir(dest_path, 0755) != 0 && errno != EEXIST) {
+        perror("Failed to create directory");
+        closedir(dir);
+        return 1;
+    }
+
+    struct dirent *entry;
+    while ((entry = readdir(dir)) != NULL) {
+        // 跳过 `.` 和 `..`
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
+            continue;
+        }
+
+        char src_item_path[MAX_PATH_LEN];
+        char dest_item_path[MAX_PATH_LEN];
+        snprintf(src_item_path, sizeof(src_item_path), "%s/%s", src_path, entry->d_name);
+        snprintf(dest_item_path, sizeof(dest_item_path), "%s/%s", dest_path, entry->d_name);
+
+        struct stat st;
+        if (stat(src_item_path, &st) == 0) {
+            if (S_ISDIR(st.st_mode)) {
+                // 递归复制目录
+                copy_directory(src_item_path, dest_item_path, interactive, preserve_attrs);
+            } else {
+                // 复制文件
+                copy_file(src_item_path, dest_item_path, interactive, preserve_attrs);
+            }
+        }
+    }
+
+    closedir(dir);
+    return 1;
+}
+
+// 复制文件，并支持交互确认和保留属性
+int copy_file(const char *src_path, const char *dest_path, int interactive, int preserve_attrs) {
+    // 交互式确认
+    if (interactive && access(dest_path, F_OK) == 0) {
+        // my_debug(1);
+        printf("overwrite '%s'? (y/n): ", dest_path);
+        char answer = getchar();
+        if (answer != 'y' && answer != 'Y') {
+            printf("Skipping '%s'\n", dest_path);
+            return 1;
+        }
+    }
+
+    // 打开源文件
+    int src_fd = open(src_path, O_RDONLY);
+    if (src_fd == -1) {
+        perror("Failed to open source file");
+        return 1;
+    }
+
+    // 打开或创建目标文件
+    int dest_fd = open(dest_path, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (dest_fd == -1) {
+        perror("Failed to open or create target file");
+        close(src_fd);
+        return 1;
+    }
+
+    // 读取并写入文件内容
+    char buffer[BUFFER_SIZE];
+    ssize_t bytes_read;
+    while ((bytes_read = read(src_fd, buffer, BUFFER_SIZE)) > 0) {
+        if (write(dest_fd, buffer, bytes_read) != bytes_read) {
+            perror("Failed to write to target file");
+            close(src_fd);
+            close(dest_fd);
+            return 1;
+        }
+    }
+
+    if (bytes_read == -1) {
+        perror("Failed to read from source file");
+    }
+
+    // 保留文件属性
+    if (preserve_attrs) {
+        struct stat st;
+        if (stat(src_path, &st) == 0) {
+            // 设置权限
+            if (chmod(dest_path, st.st_mode) != 0) {
+                perror("Failed to set permissions");
+            }
+            // 设置所有者和组
+            if (chown(dest_path, st.st_uid, st.st_gid) != 0) {
+                perror("Failed to set owner/group");
+            }
+        } else {
+            perror("Failed to get source file attributes");
+        }
+    }
+
+    close(src_fd);
+    close(dest_fd);
+
+    return 1;
 }
 
 
@@ -223,33 +335,7 @@ void print_file(const char *file_path, int show_line_numbers) {
     fclose(file);  
 }
 
-// /* 获取当前用户名和主机名 */
-// char *get_prompt(void) {
 
-//     // 获取用户名
-//     uid_t uid = getuid();
-//     struct passwd *pw = getpwuid(uid);
-//     char *username = pw ? pw->pw_name : "unknown";
-
-//     // 获取主机名
-//     char hostname[256];
-//     if (gethostname(hostname, sizeof(hostname)) != 0) {
-//         strcpy(hostname, "unknown-host");
-//     }
-
-//     // 获取当前工作目录
-//     char *cwd = get_pwd();
-//     if (!cwd) {
-//         cwd = strdup("unknown-dir");
-//     }
-
-//     // 拼接用户名、主机名和路径，生成类似shell的提示符字符串
-//     char prompt[MAX_PATH_LEN];  
-
-//     // 用于显示彩色的prompt
-//     snprintf(prompt, sizeof(prompt), "\001\033[49;32m\002\001\033[1m\002%s@%s\001\033[0m\002:\001\033[49;34m\002\001\033[1m\002%s\001\033[0m\002$ ", username, hostname, cwd);
-
-//     free(cwd);
-
-//     return strdup(prompt);
-// }
+void my_debug(int i){
+    printf("my_debug: %d\n", i);
+}
