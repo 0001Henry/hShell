@@ -14,14 +14,13 @@ extern char *built_in_cmds[];
 
 extern int (*built_in_list[])(char**);
 
-
 void shell_loop(){
     char *cmds;
     int state = 1;
 
     while(state){
         char *prompt = get_prompt();
-        // cmds = readline(BEGIN(49, 32)BLOD"Myshell->  "CLOSE);
+
         cmds = readline(prompt);
         free(prompt);
 
@@ -39,9 +38,6 @@ void shell_loop(){
 
         free(cmds);
 
-        // printf("%s\n", cmds);
-        // state ++;
-        // if(state==4)return;
     }
 }
 
@@ -104,9 +100,6 @@ int exe_cmds(char *cmds){
     if(!flag){
         state = external_process(token_list);
     }
-    // for(int i = 0; NULL != token_list[i]; i++){
-    //     free(token_list[i]);
-    // }
     free(token_list);
     
     return state;

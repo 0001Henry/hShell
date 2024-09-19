@@ -13,9 +13,8 @@ int external_process(char** token_list) {
     pid = fork();
     if (pid < 0) {
         perror("fork failed");
-        return 0; // 返回 -1 表示错误
+        return 0; 
     }
-
     if (pid == 0) {
         // 在子进程中执行命令
         if (execvp(token_list[0], token_list) == -1) {

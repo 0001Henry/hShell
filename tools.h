@@ -2,8 +2,8 @@
 #define _TOOLS_H
 
 
-#define MAX_PATH_LEN 512
-#define MAX_STR_LEN 512
+#define MAX_PATH_LEN 1024
+#define MAX_STR_LEN 1024
 #define BUFFER_SIZE 4096
 
 void replace_env_variables(char *input, char *output, int max_size);

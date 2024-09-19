@@ -64,29 +64,22 @@ int delete_directory(const char *dir_path) {
         perror("opendir failed");
         return 0;
     }
-
     struct dirent *entry;
     char path[MAX_PATH_LEN];
     struct stat statbuf;
-
-    // 读取目录内容
-    while ((entry = readdir(dir)) != NULL) {
-        // 跳过 "." 和 ".."
-        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
+    while ((entry = readdir(dir)) != NULL) {// 读取目录内容
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {// 跳过 "." 和 ".."
             continue;
         }
-
         snprintf(path, sizeof(path), "%s/%s", dir_path, entry->d_name);
-
         if (stat(path, &statbuf) == 0) {
-            // 如果是目录，递归删除
-            if (S_ISDIR(statbuf.st_mode)) {
+            if (S_ISDIR(statbuf.st_mode)) {// 如果是目录，递归删除
                 if (delete_directory(path) == -1) {
                     closedir(dir);
                     return 0;
                 }
             } else {
-                // 否则删除文件
+
                 if (syscall(SYS_unlink, path) == -1) {
                     perror("Failed to delete file");
                     closedir(dir);
@@ -95,9 +88,7 @@ int delete_directory(const char *dir_path) {
             }
         }
     }
-
     closedir(dir);
-
     // 最后删除空目录
     if (syscall(SYS_rmdir, dir_path) == 0) {
         printf("Deleted directory: %s\n", dir_path);
@@ -129,7 +120,6 @@ int copy_directory(const char *src_path, const char *dest_path, int interactive,
         if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
             continue;
         }
-
         char src_item_path[MAX_PATH_LEN];
         char dest_item_path[MAX_PATH_LEN];
         snprintf(src_item_path, sizeof(src_item_path), "%s/%s", src_path, entry->d_name);
@@ -146,7 +136,6 @@ int copy_directory(const char *src_path, const char *dest_path, int interactive,
             }
         }
     }
-
     closedir(dir);
     return 1;
 }
@@ -223,8 +212,8 @@ int copy_file(const char *src_path, const char *dest_path, int interactive, int 
 char *get_prompt(void) {
 
     char name[] = "$USER@$NAME";
-    char new_name[MAX_PATH_LEN/2];
-    replace_env_variables(name, new_name, MAX_PATH_LEN/2);
+    char new_name[MAX_PATH_LEN/4];
+    replace_env_variables(name, new_name, MAX_PATH_LEN/4);
 
     // 获取当前工作目录
     char *pwd = get_pwd();

@@ -79,8 +79,8 @@ int my_cp(char **token_list) {
         }
     } else {
         perror("Failed to get file status");
-        return 1;
     }
+    return 1;
 }
 
 
